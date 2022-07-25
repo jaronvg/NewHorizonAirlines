@@ -1,0 +1,125 @@
+﻿@page "/"
+@namespace New_Horizons_Airlines_Web_Application.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Horizons Airlines Web Application</title>
+    <base href="~/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link href="css/video-background.css" rel="stylesheet" />
+    <link href="https://cdn.syncfusion.com/blazor/18.4.33/styles/material.css" rel="stylesheet" />
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.1/js/bootstrap-select.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.standalone.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+    <script>
+        function notifyPurchase() {
+
+            alert("Purchase made.");
+
+
+
+            return true;
+        }
+        function notifyLogin() {
+            alert("Please log in to make a purchase.");
+            return true;
+        }
+    </script>
+    <script type="text/javascript">
+        var counter = 2;
+        var flag = 0;
+        var data;
+        setInterval(function () {
+            if (document.getElementById('radio' + counter) != null) {
+                if (flag == 0) {
+                    data = JSON.parse(document.getElementById('serializedData').innerHTML);
+                    flag = 1;
+                }
+                document.getElementById('radio' + counter).checked = true;
+                //document.getElementById('changeContactText').innerHTML = (counter);
+                document.getElementById('airport_name').innerHTML = (data[counter - 1].airport_name);
+                document.getElementById('airport_phone').innerHTML = ('Phone: ' + data[counter - 1].phone);
+                document.getElementById('airport_site').setAttribute("href", data[counter - 1].website);
+                document.getElementById('airport_site').innerHTML = (data[counter - 1].website);
+                document.getElementById('airport_addr').innerHTML = ('Address: ' + data[counter - 1].address);
+                document.getElementById('airport_city').innerHTML = ('City: ' + data[counter - 1].city);
+                document.getElementById('airport_state').innerHTML = ('State: ' + data[counter - 1].state);
+            }
+            else {
+                counter = 1;
+            }
+            if (document.URL.indexOf('contact') == -1) {
+                counter = 2;
+            }
+            else {
+                counter++;
+            }
+            if (counter > 29) {
+                counter = 1;
+            }
+        }, 5500);
+    </script>
+    <script>
+        function validate(email, firstName, lastName, message) {
+            if (email == "") {
+                alert("Please include your email!");
+                return false;
+            }
+            if (!email.includes("@@")) {
+                alert("Please include a valid email!");
+                return false;
+            }
+            if (firstName == "") {
+                alert("Please include your first name!");
+                return false;
+            }
+            if (lastName == "") {
+                alert("Please include your last name!");
+                return false;
+            }
+            if (message == "") {
+                alert("Please include your message!");
+                return false;
+            }
+            alert("Thank you for your feedback!");
+            return true;
+        }
+    </script>
+</head>
+
+<body>
+
+    <app>
+        <component type="typeof(App)" render-mode="ServerPrerendered" />
+    </app>
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            An error has occurred. This application may no longer respond until reloaded.
+        </environment>
+        <environment include="Development">
+            An unhandled exception has occurred. See browser dev tools for details.
+        </environment>
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+
+    <script src="_framework/blazor.server.js"></script>
+
+</body>
+
+</html>

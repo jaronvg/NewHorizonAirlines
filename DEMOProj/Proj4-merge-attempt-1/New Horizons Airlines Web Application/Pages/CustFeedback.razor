@@ -1,0 +1,68 @@
+﻿@attribute [Authorize(Roles = "customer service")]
+@page "/CustomerFeedback"
+@using New_Horizons_Airlines_Web_Application.Data
+@using Microsoft.Extensions.Configuration
+@using DataLibrary
+@inject IDataAccess _data
+@inject IConfiguration _config
+@inject IJSRuntime jsRuntime
+
+<center>
+    <h3>Customer Feedback</h3>
+    <div class="container" style="width: 100%; padding-top: 20px; padding-bottom: 20px; align-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.65); border-radius: 10px;">
+        @if (customerFBList.Count() != 0)
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var feedback in customerFBList)
+                    {
+                        <tr style="background-color: rgba(255, 255, 255, 0.45)">
+                            <td>
+                                @feedback.Email
+                            </td>
+                            <td>
+                                @feedback.first_name
+                            </td>
+                            <td>
+                                @feedback.last_name
+                            </td>
+                            <td>
+                                @feedback.message
+                            </td>
+                            <td>
+                                <form>
+                                    <button type="submit" class="btn btn-info btn-block" @onclick="() => removeFeedback(feedback.Email, feedback.message)">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p1 style="color:black">There is currently no customer feedback that has been submitted.</p1>
+        }
+    </div>
+</center>
+@code {
+    private List<CustomerFeedbackModel> customerFBList = new List<CustomerFeedbackModel>();
+    protected override async Task OnInitializedAsync()
+    {
+        string sql = "SELECT C.Email, C.first_name, C.last_name, C.message FROM new_horizons_db.customer_feedback C";
+        customerFBList = await _data.LoadData<CustomerFeedbackModel, dynamic>(sql, new { }, _config.GetConnectionString("DefaultConnection"));
+    }
+    private async Task removeFeedback(string email, string message)
+    {
+        string sql = "DELETE FROM new_horizons_db.customer_feedback C WHERE C.Email = '" + email + "' AND C.message = '" + message + "'";
+        await _data.SaveData<dynamic>(sql, new { }, _config.GetConnectionString("DefaultConnection"));
+    }
+}

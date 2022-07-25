@@ -1,0 +1,53 @@
+﻿<div class="top-row pl-4 navbar navbar-dark">
+    <a class="navbar-brand" style="color: rgba(0, 0, 0, 0.8)" href="">New Horizons Airlines</a>
+    <button class="navbar-toggler" @onclick="ToggleNavMenu">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
+    <ul class="nav flex-column">
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Home
+            </NavLink>
+        </li>
+        <li class="nav-item px-3">
+            <NavLink class="nav-link" href="contact">
+                <span class="oi oi-plus" aria-hidden="true"></span> Contact Us
+            </NavLink>
+        </li>
+        <AuthorizeView Roles="customer">
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="CurrentFlights">
+                    <span class="oi oi-cog" aria-hidden="true"></span> Current Flights
+                </NavLink>
+            </li>
+        </AuthorizeView>
+        <AuthorizeView Roles="admin">
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="SwitchPrivileges">
+                    <span class="oi oi-cog" aria-hidden="true"></span> Privileges
+                </NavLink>
+            </li>
+        </AuthorizeView>
+        <AuthorizeView Roles="customer service">
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="CustomerFeedback">
+                    <span class="oi oi-cog" aria-hidden="true"></span> Feedback
+                </NavLink>
+            </li>
+        </AuthorizeView>
+    </ul>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

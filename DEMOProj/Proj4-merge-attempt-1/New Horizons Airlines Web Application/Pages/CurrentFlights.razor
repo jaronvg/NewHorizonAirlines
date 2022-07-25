@@ -1,0 +1,78 @@
+﻿@using New_Horizons_Airlines_Web_Application.Data
+@using Microsoft.Extensions.Configuration
+@using DataLibrary
+@using Microsoft.AspNetCore.Http
+@inject IDataAccess _data
+@inject IConfiguration _config
+@inject IJSRuntime jsRuntime
+@inject IHttpContextAccessor httpContextAccessor
+@attribute [Authorize(Roles = "customer")]
+@page "/CurrentFlights"
+<center>
+    <h3>My Current Flights</h3>
+</center>
+@if (purchases.Count() != 0)
+{
+    <div class="container" style="width: 100%; padding-top: 20px; padding-bottom: 20px; align-content: center; align-items: center; background-color: rgba(255, 255, 255, 0.65); border-radius: 10px;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Airports/FlightID</th>
+                    <th>Ticket Info/Distance</th>
+                    <th>Time/Duration</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var purchase in purchases)
+                {
+                    <tr style="background-color: rgba(255, 255, 255, 0.45)">
+                        <td>
+                            Departure: @purchase.departing_airport<br>
+                            Arrival: @purchase.arrival_airport<br>
+                            Flight ID: @purchase.flight_id
+                        </td>
+                        <td>
+                            Ticket ID: @purchase.ticket_id<br>
+                            Price: $@purchase.price<br>
+                            @purchase.distance miles
+                        </td>
+                        <td>
+                            Depart Time: @purchase.departing_time<br>
+                            Arrival Time: @purchase.arriving_time<br>
+                            Duration: @purchase.flight_duration hours
+                        </td>
+                        <td>
+                            <form>
+                                <button type="submit" class="btn btn-info btn-block" @onclick="() => removeFlight(purchase.ticket_id)">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+@if (purchases.Count() == 0)
+{
+    <center>
+        <h3>You currently have no Flights booked!</h3>
+        <form action="/">
+            <button type="submit" class="btn btn-info btn-block">Purchase Flight</button>
+        </form>
+    </center>
+}
+@code {
+    public string UserName;
+    private List<Purchases> purchases = new List<Purchases>();
+    protected override async Task OnInitializedAsync()
+    {
+        UserName = httpContextAccessor.HttpContext.User.Identity.Name;
+        string sql = "SELECT FP.departing_airport, FP.arrival_airport, FP.flight_duration, F.flight_id, F.flight_date, convert(flight_time, datetime) as departing_time, convert(TIMESTAMPADD(MINUTE, flight_duration*60, flight_time), datetime) as arriving_time, T.ticket_id, T.price, FLOOR((flight_duration * 575.39)) as distance FROM new_horizons_db.flight_paths FP, new_horizons_db.flights F, new_horizons_db.purchases P, new_horizons_db.aspnetusers U, new_horizons_db.tickets T WHERE P.Id = U.Email AND U.UserName = '" + UserName + "' AND P.ticket_id = T.ticket_id AND T.flight_id = F.flight_id AND F.flight_path_id = FP.flight_path_id";
+        purchases = await _data.LoadData<Purchases, dynamic>(sql, new { }, _config.GetConnectionString("DefaultConnection"));
+    }
+    private async Task removeFlight(string ticket_id)
+    {
+        string sql = "DELETE FROM new_horizons_db.purchases P WHERE P.ticket_id = '" + ticket_id + "'";
+        await _data.SaveData<dynamic>(sql, new { }, _config.GetConnectionString("DefaultConnection"));
+    }
+}

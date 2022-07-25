@@ -1,0 +1,185 @@
+﻿@page "/"
+@using New_Horizons_Airlines_Web_Application.Data
+@using Microsoft.Extensions.Configuration
+@using DataLibrary
+@using Syncfusion.Blazor.Maps
+@using Syncfusion.Blazor.Calendars
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor httpContextAccessor
+@inject IDataAccess _data
+@inject IConfiguration _config
+@inject IJSRuntime jsRuntime
+@* Styles the DatePicker *@
+<style>
+    .e-input-group,
+    .e-input-group.e-control-wrapper {
+        font-size: 20px;
+        padding-left: 20px;
+        width: fit-content();
+    }
+</style>
+
+
+<div class="row" style="background-color:rgba(255, 255, 255, 0.45); border-radius: 10px;">
+    @* User Menu *@
+    <div class="col-xl-3 col-lg-4 col-md-5" style="margin:10px; background-color:rgba(255, 255, 255, 0.45); border-radius: 10px;">
+        <section>
+            <div class="form-group">
+                <h4 id="grabDepartAirport">From: @departing_airport</h4>
+
+                <select @bind="departing_airport" required class="form-control selectpicker_oncreate" data-live-search="true" display="true" data-width="110%">
+                    @foreach (var airport in airports)
+                    {
+                        <option value="@airport.airport_id, @airport.city"> @airport.city, @airport.state, @airport.airport_id  </option>
+                    }
+                </select>
+                <br />
+                <h4>To: @arrival_airport</h4>
+                <select @bind="arrival_airport" class="form-control selectpicker_oncreate" data-live-search="true" display="true" data-width="110%">
+                    @foreach (var airport in airports)
+                    {
+                        <option value="@airport.airport_id, @airport.city"> @airport.city, @airport.state, @airport.airport_id  </option>
+                    }
+                </select>
+                <br />
+                <h4>Trip Type:</h4>
+                <select class="form-control" data-live-search="true" display="true" data-width="110%">
+                    <option value=1>One Way</option>
+                    <option value=2>Round Trip</option>
+                    <option value=3>Multi-City</option>
+                </select>
+                <br />
+                <h4>Passengers</h4>
+                <select @bind="@passengerCount" class="form-control selectpicker_oncreate" data-live-search="false" display="true" data-width="110%">
+
+                    @for (int i = 1; i < 12; ++i)
+                    {
+                        <option value=@i>@i Passenger</option>
+                    }
+                </select>
+
+                <br />
+                <h4>Date:</h4>
+                <div style="background-color: white;">
+                    <SfDatePicker TValue="DateTime" Value="@selectedDate" Format="MM-dd-yyyy" Min="@startDate" Max="endDate" Start="@CalendarView.Year" AllowEdit="false">
+                        <DatePickerEvents TValue="DateTime" ValueChange="@onChange"></DatePickerEvents>
+                    </SfDatePicker>
+                </div>
+                <br />
+                <button class="btn btn-info btn-block" @onclick="SearchFlights">Search Flights</button>
+            </div>
+        </section>
+    </div>
+    @* Flight search map and results *@
+    <div class="col-xl-8 col-lg-7 col-md-6">
+        <section>
+            <SfMaps Height="375px" Background="rgba(255, 255, 255, 0.45)">
+                <MapsZoomSettings Enable="false" ZoomFactor="4" />
+                <MapsCenterPosition Latitude="35.96073" Longitude="-96.4247" />
+                <MapsLayers>
+                    <MapsLayer LayerType="ShapeLayerType.OSM" TValue="string">
+                        @if (searchResults != null)
+                        {
+                            <MapsNavigationLines>
+                                <MapsNavigationLine Visible="true" Width="8" Angle="-0.05" Color="#00ace6"
+                                                    Latitude="@naviagtionLineOne.ToArray()" Longitude="@naviagtionLineTwo.ToArray()" />
+                            </MapsNavigationLines>
+                            <MapsMarkerSettings>
+                                <MapsMarker Visible="true" DataSource="@AirportLocation1" TValue="MarkerLocation" AnimationDuration="0">
+                                    <MarkerTemplate>
+                                        @{
+                                            <div>
+                                                <img class="markerTemplate" src="images/maps/locationBaseIcon.png" style="height:10px;width:10px;" />
+                                            </div>
+                                        }
+                                    </MarkerTemplate>
+                                </MapsMarker>
+                                <MapsMarker Visible="true" DataSource="@AirportLocation2" TValue="MarkerLocation" AnimationDuration="0">
+                                    <MarkerTemplate>
+                                        @{
+                                            <div>
+                                                <img class="markerTemplate" src="images/maps/locationIcon3.png" style="height:20px;width:10px;" />
+                                            </div>
+                                        }
+                                    </MarkerTemplate>
+                                </MapsMarker>
+                                <MapsMarker Visible="true" DataSource="@AirportDistance" TValue="MarkerLocation">
+                                    <MarkerTemplate>
+                                        @{
+                                            @if (AirportLocation2[0].Longitude > AirportLocation1[0].Longitude)
+                                            {
+                                                <div style="border-radius: 10px; background-color:rgba(94, 232, 242, 0.45)">
+                                                    <img class="markerTemplate" src="images/maps/planeIcon.png" style="height:20px;width:20px;" />
+                                                    @flightDuration.Hours h @flightDuration.Minutes min
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div style="border-radius: 10px; background-color:rgba(94, 232, 242, 0.45)">
+                                                    <img class="markerTemplate" src="images/maps/planeIconFlipped.png" style="height:20px;width:20px;" />
+                                                    @flightDuration.Hours h @flightDuration.Minutes min
+                                                </div>
+                                            }
+                                        }
+                                    </MarkerTemplate>
+                                </MapsMarker>
+                            </MapsMarkerSettings>
+                        }
+                    </MapsLayer>
+                </MapsLayers>
+            </SfMaps>
+            @if (searchResults == null)
+            {
+                <p><em>You're search results will appear here...</em></p>
+            }
+            else
+            {
+                <div class="container" style="width:100%;padding-top:20px;padding-bottom:20px;align-content:center;align-items:center">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Flight</th>
+                                <th>Departure</th>
+                                <th>Arrival</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var flight in searchResults)
+                            {
+                                @if (flight.flight_id != -1)
+                                {
+                                    <tr style="background-color: rgba(255, 255, 255, 0.45)">
+                                        <td class="n">
+                                            @flight.flight_id
+                                            <br />
+                                        </td>
+                                        <td>
+                                            @flight.departing_city, @flight.departing_state
+                                            <br />
+                                            @flight.departing_airport_id @flight.departing_airport_name
+                                            <br />
+                                            @flight.departing_date.ToString().Split(' ')[0]
+                                            @flight.departing_time.ToString("hh:mm tt").Split(' ')[0]
+                                            @flight.departing_time.ToString("hh:mm tt").Split(' ')[1]
+                                        </td>
+                                        <td>
+                                            @flight.arrival_city, @flight.arrival_state
+                                            <br />
+                                            @flight.arrival_airport_id @flight.arrival_airport_name
+                                            <br />
+                                            @flight.arrival_time.ToString("hh:mm tt").Split(' ')[0]
+                                            @flight.arrival_time.ToString("hh:mm tt").Split(' ')[1]
+                                        </td>
+                                        <td> <a class="btn btn-info btn-block" href="/purchase/@flight.flight_id.ToString()/@passengerCount.ToString()/@flight.flight_duration.ToString()/@flight.departing_airport_id.ToString()/@flight.arrival_airport_id/@flight.departing_date.ToString().Split(' ')[0]/@flight.departing_time.ToString("h:mm tt").Split(' ')[0] @flight.departing_time.ToString("h:mm tt").Split(' ')[1] - @flight.arrival_time.ToString("h:mm tt").Split(' ')[0] @flight.arrival_time.ToString("h:mm tt").Split(' ')[1]/">Select</a> </td>
+
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+
+</div>
