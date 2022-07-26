@@ -9,6 +9,10 @@ The website is built using HTML/CSS, JavaScript, Razor Pages, client-side UI fra
 Entity Framework Core, C#, micro ORM Dapper, and a MySQL database. To simulate a real airline website, real flight data was collected using 
 a Google Apps script. This data, as well as all other user data was store in the database.  
 
+### Required Software
+1. Visual Studio
+2. MySQL (Recommended)
+
 ### Running the Project
 1.	Visual Studio is required to run the application; preferably the latest version.
 2.	Once Visual Studio is installed, download the project (includes the code and database information).
